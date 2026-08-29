@@ -96,7 +96,7 @@ tampering, and tampering must never read as a typo.
 ```python
 from shim_audit_verify import verify_bundle, canonical_row, chain_hash, merkle_root
 
-report = verify_bundle(bundle_dict)   # -> VerificationReport (frozen dataclass)
+report = verify_bundle(bundle_dict)  # -> VerificationReport (frozen dataclass)
 ```
 
 `canonical_row`, `chain_hash` and `merkle_root` are exported on purpose: they are

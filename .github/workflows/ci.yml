@@ -29,6 +29,10 @@ jobs:
       - run: uv run --locked ruff format --check .
       - run: uv run --locked ty check
       - name: Tests with branch coverage
+        env:
+          # Written outside the checkout: the tagged-tree integrity check in the
+          # release workflow must not have to excuse a build artefact.
+          COVERAGE_FILE: ${{ runner.temp }}/coverage-data
         run: |
           uv run --locked coverage run -m pytest
           uv run --locked coverage report
