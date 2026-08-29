@@ -38,7 +38,7 @@ shim-audit-verify = "shim_audit_verify.cli:main"
 dev = [
   "coverage>=7.6,<8",
   "pytest>=9.0.3,<10",
-  "ruff>=0.15.22,<0.16",
+  "ruff>=0.15.22,<0.17",
   "ty>=0.0.65,<0.1",
   "uv-build==0.12.5",
 ]
