@@ -177,6 +177,11 @@ jobs:
 
   attest:
     needs: build
+    # Artifact attestations need GitHub Team or Enterprise on a private
+    # repository. This gate lets a release run while the repository is still
+    # private and restores attestation automatically once it is public; it is
+    # not a decision to ship without provenance.
+    if: ${{ !github.event.repository.private }}
     runs-on: ubuntu-latest
     permissions:
       artifact-metadata: write
@@ -203,6 +208,9 @@ jobs:
 
   release:
     needs: [build, attest]
+    # A skipped attest job must not silently skip the release; a failed one must
+    # still stop it.
+    if: ${{ always() && needs.build.result == 'success' && needs.attest.result != 'failure' }}
     runs-on: ubuntu-latest
     environment: release
     permissions:
@@ -232,6 +240,7 @@ jobs:
 
   publish:
     needs: [build, attest, release]
+    if: ${{ always() && needs.release.result == 'success' && needs.attest.result != 'failure' }}
     runs-on: ubuntu-latest
     environment: pypi
     permissions:

@@ -11,6 +11,13 @@ the bundle format at a given `format_version`.
 
 ## [Unreleased]
 
+### Notes
+
+- Build attestations are skipped while this repository is private, because
+  GitHub only provides them for private repositories on Team and Enterprise
+  plans. They resume automatically on the first release cut after the
+  repository becomes public. The SBOM and `SHA256SUMS` ship either way.
+
 ## [0.1.0] - 2026-08-29
 
 ### Added
