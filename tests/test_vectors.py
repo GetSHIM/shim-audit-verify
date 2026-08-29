@@ -1,6 +1,6 @@
 """Golden vectors.
 
-These files are the shared source of truth with the Shim server's own test
+These files are the shared source of truth with the shim server's own test
 suite. If a change here is not mirrored by a server change, the published
 verifier and the producer have diverged and one of them is lying.
 """

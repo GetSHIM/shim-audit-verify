@@ -1,12 +1,12 @@
 [project]
 name = "shim-audit-verify"
 version = "0.1.0"
-description = "Independent verifier for Shim audit evidence bundles"
+description = "Independent verifier for shim audit evidence bundles"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
-authors = [{ name = "Shim Engineering" }]
+authors = [{ name = "shim Engineering" }]
 keywords = ["audit", "tamper-evident", "hash-chain", "eu-ai-act", "compliance"]
 classifiers = [
   "Development Status :: 4 - Beta",

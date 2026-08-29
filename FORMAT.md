@@ -1,6 +1,6 @@
 # `shim.audit.bundle` v1
 
-This document is the byte-level contract for a Shim audit evidence bundle. It is
+This document is the byte-level contract for a shim audit evidence bundle. It is
 written so that a third party can reimplement the verifier in any language and
 get identical results. Where this document and any implementation disagree, this
 document is the specification and the implementation is the bug.
@@ -139,7 +139,7 @@ Floats are serialized by `json.dumps`, which emits exponent notation for
 magnitudes at or above `1e16`. A producer must never place such a value in a
 canonical field: PostgreSQL `jsonb` normalises `1e+16` to `10000000000000000`,
 which changes the canonical bytes on the way back out and would break the row
-hash. The Shim exporter rejects non-finite floats and floats with
+hash. The shim exporter rejects non-finite floats and floats with
 `abs(value) >= 1e16` rather than emitting a bundle that cannot be verified.
 Ordinary floats such as `0.85` round-trip unchanged and are fine.
 
@@ -275,6 +275,14 @@ reporting that as tampering would make the verifier useless.
 
 A day present in `rows` with no matching anchor is not an error. Anchors are
 written by a daily job, so the most recent day is often not yet anchored.
+
+The two checks detect different edits, and a bundle can fail one while passing
+the other. Anchor leaves are the **stored** `row_hash` values (§4.4), so editing
+a row's content breaks §6.1 while leaving every root intact, and editing a
+stored `row_hash` breaks §6.2 first. The example bundle in `examples/` shows the
+first case: `chain BROKEN`, `anchors OK`. Read the chain result as the primary
+finding; treat the anchors as a narrower second check, never as a second opinion
+on the same question.
 
 ### 6.3 Format errors
 

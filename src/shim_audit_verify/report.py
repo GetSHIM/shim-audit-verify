@@ -1,6 +1,6 @@
 """Frozen result types.
 
-These are public API under semver. Field names deliberately mirror the Shim
+These are public API under semver. Field names deliberately mirror the shim
 server's ``VerifyResult`` schema so one consumer schema parses both a bundle
 verification and a server-side verification, including the nested
 ``live_row_count`` name that reads oddly for a static file.

@@ -1,6 +1,6 @@
 """Chain and anchor verification for a ``shim.audit.bundle``.
 
-The chain walk mirrors the Shim server's own verifier step for step, including
+The chain walk mirrors the shim server's own verifier step for step, including
 stopping at the first break, so the two cannot drift apart quietly.
 """
 

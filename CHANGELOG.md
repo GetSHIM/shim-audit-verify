@@ -28,7 +28,7 @@ the bundle format at a given `format_version`.
   verified, `1` verification failed, `2` input error.
 - Library API: `verify_bundle`, `canonical_row`, `chain_hash`, `merkle_root`,
   `genesis_hash`, `compute_row_hash`, and the frozen report types.
-- Golden vectors under `tests/vectors/`, shared with the Shim server's own test
+- Golden vectors under `tests/vectors/`, shared with the shim server's own test
   suite so producer and verifier cannot diverge silently.
 - Published example bundles under `examples/`, one intact and one with a single
   altered field.

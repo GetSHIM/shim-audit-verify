@@ -1,8 +1,40 @@
-# shim-audit-verify
+<p align="center">
+  <a href="https://getshim.tech">
+    <img src="https://raw.githubusercontent.com/GetSHIM/shim-audit-verify/main/docs/assets/shim-logo.svg" alt="shim" width="280">
+  </a>
+</p>
 
-An independent, dependency-free verifier for Shim audit evidence bundles.
+<h1 align="center">shim Audit Verify</h1>
 
-A Shim gateway writes a metadata-only audit row for every AI request, and each
+<p align="center">
+  <strong>Check a shim audit bundle yourself, on your own machine.</strong><br>
+  No account, no network, no dependencies. If a row was edited after the fact,
+  this tells you which one.
+</p>
+
+<p align="center">
+  <a href="https://getshim.tech">Website</a> ·
+  <a href="https://github.com/GetSHIM/shim-audit-verify/blob/main/FORMAT.md">Format specification</a> ·
+  <a href="https://github.com/GetSHIM/shim">shim</a> ·
+  <a href="https://github.com/GetSHIM/shim-guard">shim Guard</a>
+</p>
+
+<p align="center">
+  <a href="https://pypi.org/project/shim-audit-verify/"><img src="https://img.shields.io/pypi/v/shim-audit-verify.svg?logo=pypi&amp;label=PyPI" alt="PyPI version"></a>
+  <a href="https://github.com/GetSHIM/shim-audit-verify/actions/workflows/ci.yml"><img src="https://github.com/GetSHIM/shim-audit-verify/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://pypi.org/project/shim-audit-verify/"><img src="https://img.shields.io/pypi/pyversions/shim-audit-verify.svg?logo=python&amp;logoColor=white" alt="Python versions"></a>
+  <a href="https://github.com/GetSHIM/shim-audit-verify/blob/main/LICENSE"><img src="https://img.shields.io/github/license/GetSHIM/shim-audit-verify.svg" alt="License"></a>
+  <a href="https://github.com/GetSHIM/shim-audit-verify/stargazers"><img src="https://img.shields.io/github/stars/GetSHIM/shim-audit-verify.svg?style=flat&amp;logo=github" alt="GitHub stars"></a>
+</p>
+
+> [!IMPORTANT]
+> A `chain OK` means the rows were not altered after they were written. It does
+> **not** prove they are complete, correctly derived, or independently
+> timestamped, because the daily anchors never leave the system that wrote them.
+> Read [what it does not prove](#what-it-does-not-prove) before you rely on a
+> result.
+
+A shim gateway writes a metadata-only audit row for every AI request, and each
 row's hash covers the previous row's hash. This tool takes an exported bundle of
 those rows and recomputes the whole chain on your machine. If a row was edited,
 deleted, inserted or reordered after the fact, it tells you which one.
@@ -10,7 +42,7 @@ deleted, inserted or reordered after the fact, it tells you which one.
 ## What it does not prove
 
 Read this before you rely on a `chain OK`. The full list is in
-[FORMAT.md](FORMAT.md#7-known-limitations).
+[FORMAT.md](https://github.com/GetSHIM/shim-audit-verify/blob/main/FORMAT.md#7-known-limitations).
 
 - **Anchors are local only.** The daily Merkle anchors are computed and stored by
   the same system that writes the rows, and are not published anywhere. The chain
@@ -101,14 +133,14 @@ report = verify_bundle(bundle_dict)  # -> VerificationReport (frozen dataclass)
 
 `canonical_row`, `chain_hash` and `merkle_root` are exported on purpose: they are
 the reference for anyone reimplementing the format in another language.
-[FORMAT.md](FORMAT.md) is the byte-level specification, and
+[FORMAT.md](https://github.com/GetSHIM/shim-audit-verify/blob/main/FORMAT.md) is the byte-level specification, and
 `tests/vectors/` holds golden vectors to check a reimplementation against. The
-Shim server runs those same vectors in its own test suite, so the producer cannot
+shim server runs those same vectors in its own test suite, so the producer cannot
 change the format without breaking this repository's contract.
 
 ## Getting a bundle of your own
 
-A Shim tenant exports one from the gateway:
+A shim tenant exports one from the gateway:
 
 ```console
 $ curl -H "Authorization: Bearer $SHIM_TOKEN" \
@@ -129,8 +161,24 @@ uv run --locked coverage report
 ```
 
 Coverage is enforced at 100% for lines and branches. See
-[CONTRIBUTING.md](CONTRIBUTING.md).
+[CONTRIBUTING.md](https://github.com/GetSHIM/shim-audit-verify/blob/main/CONTRIBUTING.md).
+
+## Project documentation
+
+- [Format specification](https://github.com/GetSHIM/shim-audit-verify/blob/main/FORMAT.md)
+- [Known limitations](https://github.com/GetSHIM/shim-audit-verify/blob/main/FORMAT.md#7-known-limitations)
+- [Changelog](https://github.com/GetSHIM/shim-audit-verify/blob/main/CHANGELOG.md)
+- [Contributing](https://github.com/GetSHIM/shim-audit-verify/blob/main/CONTRIBUTING.md)
+- [Security policy](https://github.com/GetSHIM/shim-audit-verify/blob/main/SECURITY.md)
+
+## Related projects
+
+- [shim](https://github.com/GetSHIM/shim) — the AI trust-boundary gateway that
+  produces these bundles. This repository is deliberately separate: a verifier
+  that shipped with the thing it verifies would be worth very little.
+- [shim Guard](https://github.com/GetSHIM/shim-guard) — local pre-submit privacy
+  protection for coding-agent CLIs.
 
 ## License
 
-Apache-2.0. See [LICENSE](LICENSE).
+Apache-2.0. See [LICENSE](https://github.com/GetSHIM/shim-audit-verify/blob/main/LICENSE).

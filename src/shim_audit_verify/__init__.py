@@ -1,4 +1,4 @@
-"""Independent verifier for Shim audit evidence bundles.
+"""Independent verifier for shim audit evidence bundles.
 
 The hashing primitives are exported deliberately: anyone reimplementing the
 format in another language should have this as their reference.

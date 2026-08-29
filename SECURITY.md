@@ -49,7 +49,7 @@ Out of scope:
   the unhashed envelope are known and stated design properties, not
   vulnerabilities. A concrete exploit that goes beyond what those sections claim
   is in scope.
-- The Shim gateway itself. Report those through
+- The shim gateway itself. Report those through
   https://getshim.tech/security.
 
 ## EU Cyber Resilience Act

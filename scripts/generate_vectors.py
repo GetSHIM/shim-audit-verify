@@ -1,6 +1,6 @@
 """Regenerate the golden test vectors.
 
-The vectors are the single source of truth shared with the Shim server's own
+The vectors are the single source of truth shared with the shim server's own
 test suite: the server proves it reproduces them, so the published verifier can
 never quietly become a liar about the server's format.
 
@@ -219,7 +219,7 @@ def build() -> dict[Path, str]:
             indent=2,
             sort_keys=True,
         )
-    # The manifest is what the Shim server's test suite compares its copy of
+    # The manifest is what the shim server's test suite compares its copy of
     # these vectors against. Without it the two sides could drift apart and each
     # stay internally consistent, which is the one failure mode that would make
     # the published verifier quietly wrong about the producer.

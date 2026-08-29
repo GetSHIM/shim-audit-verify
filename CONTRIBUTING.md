@@ -3,7 +3,7 @@
 This repository exists so that a stranger can check a claim we make about our
 own product. That gives it two unusual rules.
 
-**The format is not ours to change here.** `FORMAT.md` documents what the Shim
+**The format is not ours to change here.** `FORMAT.md` documents what the shim
 gateway already produces. If a change to this repository would make a bundle
 produced by a released gateway stop verifying, the change is wrong, even if it
 is tidier. Format changes start on the producer side and arrive here with a
