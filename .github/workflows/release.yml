@@ -1,0 +1,252 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.13'
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+      - name: Require matching version and a written changelog entry
+        run: python scripts/check_release_metadata.py .
+      - run: uv sync --locked
+      - run: uv run --locked ruff check .
+      - run: uv run --locked ruff format --check .
+      - run: uv run --locked ty check
+      - name: Tests with branch coverage
+        run: |
+          uv run --locked coverage run -m pytest
+          uv run --locked coverage report
+      - name: Generated artefacts are not stale
+        run: |
+          uv run --locked python scripts/generate_vectors.py --check
+          uv run --locked python scripts/generate_examples.py --check
+      - name: Require verification inputs to match the tagged tree
+        run: |
+          mkdir /tmp/verified-source
+          /usr/bin/git archive "$GITHUB_SHA" | /usr/bin/tar -x -C /tmp/verified-source
+          git diff --exit-code "$GITHUB_SHA" --
+          diff -qr --exclude=.git --exclude=.venv --exclude=.pytest_cache \
+            --exclude=.ruff_cache --exclude=__pycache__ --exclude=dist \
+            /tmp/verified-source .
+      - run: uv build --no-build-isolation --no-create-gitignore --out-dir dist/tested
+      - name: Allow only the versioned wheel and source distribution
+        run: python scripts/check_release_metadata.py . --artifacts dist/tested
+      - run: uv export --locked --no-dev --no-emit-project --output-file dist/requirements.lock
+      - name: Verify the packaged wheel and source distribution contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          for kind in wheel sdist; do
+            target="/tmp/contract-$kind"
+            uv venv --python 3.13 "$target"
+            if [ "$kind" = wheel ]; then
+              uv pip install --python "$target" --no-deps \
+                "dist/tested/shim_audit_verify-$version-py3-none-any.whl"
+            else
+              uv pip install --python "$target" --no-deps --no-build-isolation \
+                "dist/tested/shim_audit_verify-$version.tar.gz"
+            fi
+            uv pip list --python "$target" --format json > "/tmp/installed-$kind.json"
+            python scripts/check_installed.py "/tmp/installed-$kind.json"
+            verify="$target/bin/shim-audit-verify"
+            expect() {
+              local expected=$1; shift
+              local actual=0
+              "$@" > /dev/null || actual=$?
+              if [ "$actual" -ne "$expected" ]; then
+                echo "expected exit $expected from: $*  (got $actual)" >&2
+                exit 1
+              fi
+            }
+            expect 0 "$verify" examples/shim-audit-sample.json
+            expect 1 "$verify" examples/shim-audit-sample-tampered.json
+            printf 'not a bundle' > /tmp/broken.json
+            expect 2 "$verify" /tmp/broken.json
+          done
+      - name: The distribution must declare no runtime dependencies
+        run: python scripts/check_distribution.py dist/tested
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: verified-dist
+          path: dist/tested/*
+          if-no-files-found: error
+
+  build:
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+      - name: Snapshot the tagged source before dependency execution
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          mkdir /tmp/build-source
+          /usr/bin/git archive "$GITHUB_SHA" | /usr/bin/tar -x -C /tmp/build-source
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.13'
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+      - name: Require matching version and a written changelog entry
+        run: python /tmp/build-source/scripts/check_release_metadata.py /tmp/build-source
+      - run: uv sync --project /tmp/build-source --locked --only-dev --no-install-project
+      - run: |
+          uv build --python /tmp/build-source/.venv/bin/python --no-build-isolation \
+            --no-create-gitignore /tmp/build-source --out-dir dist/packages
+      - name: Allow only the versioned wheel and source distribution
+        run: python scripts/check_release_metadata.py . --artifacts dist/packages
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: verified-dist
+          path: verified
+      - name: Require the fresh tagged build to match the tested artifacts
+        run: |
+          python scripts/check_release_metadata.py . --artifacts verified
+          version="${GITHUB_REF_NAME#v}"
+          cmp "verified/shim_audit_verify-$version-py3-none-any.whl" \
+            "dist/packages/shim_audit_verify-$version-py3-none-any.whl"
+          cmp "verified/shim_audit_verify-$version.tar.gz" \
+            "dist/packages/shim_audit_verify-$version.tar.gz"
+      - name: Collect the evidence assets from the tagged tree
+        run: |
+          uv export --project /tmp/build-source --locked --no-dev --no-emit-project \
+            --output-file dist/requirements.lock
+          cp /tmp/build-source/FORMAT.md dist/FORMAT.md
+          cp /tmp/build-source/examples/shim-audit-sample.json dist/
+          cp /tmp/build-source/examples/shim-audit-sample-tampered.json dist/
+      - uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0
+        with:
+          path: dist/packages
+          format: cyclonedx-json
+          output-file: dist/shim-audit-verify.sbom.cdx.json
+          upload-artifact: false
+          upload-release-assets: false
+      - name: Hash the flattened release assets
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          (
+            cd dist/packages
+            sha256sum "shim_audit_verify-$version-py3-none-any.whl" \
+              "shim_audit_verify-$version.tar.gz"
+            cd ..
+            sha256sum FORMAT.md shim-audit-sample.json shim-audit-sample-tampered.json \
+              requirements.lock shim-audit-verify.sbom.cdx.json
+          ) > dist/SHA256SUMS
+      - name: Verify the checksums from a flat download directory
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          mkdir dist/download
+          cp "dist/packages/shim_audit_verify-$version-py3-none-any.whl" \
+            "dist/packages/shim_audit_verify-$version.tar.gz" dist/FORMAT.md \
+            dist/shim-audit-sample.json dist/shim-audit-sample-tampered.json \
+            dist/requirements.lock dist/shim-audit-verify.sbom.cdx.json \
+            dist/SHA256SUMS dist/download/
+          cd dist/download
+          sha256sum -c SHA256SUMS
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: release-dist
+          path: |
+            dist/packages/
+            dist/FORMAT.md
+            dist/shim-audit-sample.json
+            dist/shim-audit-sample-tampered.json
+            dist/requirements.lock
+            dist/SHA256SUMS
+            dist/shim-audit-verify.sbom.cdx.json
+          if-no-files-found: error
+
+  attest:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      artifact-metadata: write
+      attestations: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: release-dist
+          path: dist
+      - name: Verify the package artifact allowlist
+        run: python scripts/check_release_metadata.py . --artifacts dist/packages
+      - uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
+        with:
+          subject-path: dist/packages/*
+      - uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
+        with:
+          subject-path: dist/packages/*
+          sbom-path: dist/shim-audit-verify.sbom.cdx.json
+
+  release:
+    needs: [build, attest]
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: release-dist
+          path: dist
+      - name: Verify the package artifact allowlist
+        run: python scripts/check_release_metadata.py . --artifacts dist/packages
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          gh release create "$GITHUB_REF_NAME" \
+            "dist/packages/shim_audit_verify-$version-py3-none-any.whl" \
+            "dist/packages/shim_audit_verify-$version.tar.gz" \
+            dist/FORMAT.md dist/shim-audit-sample.json \
+            dist/shim-audit-sample-tampered.json dist/requirements.lock \
+            dist/SHA256SUMS dist/shim-audit-verify.sbom.cdx.json \
+            --generate-notes --repo "$GITHUB_REPOSITORY"
+
+  publish:
+    needs: [build, attest, release]
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: release-dist
+          path: dist
+      - name: Verify the package artifact allowlist
+        run: python scripts/check_release_metadata.py . --artifacts dist/packages
+      - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # release/v1
+        with:
+          packages-dir: dist/packages

@@ -1,0 +1,12 @@
+# Every change needs a maintainer review. The hashing and verification core and
+# the format specification carry the whole point of this repository.
+#
+# Email owners only resolve if the address is on the person's GitHub account and
+# they are an organisation member; otherwise the rule silently matches nobody.
+*                                  turgay@getshim.tech mertcan@getshim.tech can@getshim.tech
+
+/FORMAT.md                         turgay@getshim.tech mertcan@getshim.tech can@getshim.tech
+/src/shim_audit_verify/hashing.py  turgay@getshim.tech mertcan@getshim.tech can@getshim.tech
+/src/shim_audit_verify/verify.py   turgay@getshim.tech mertcan@getshim.tech can@getshim.tech
+/tests/vectors/                    turgay@getshim.tech mertcan@getshim.tech can@getshim.tech
+/.github/workflows/                turgay@getshim.tech mertcan@getshim.tech can@getshim.tech

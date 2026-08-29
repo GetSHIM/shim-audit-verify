@@ -1,0 +1,31 @@
+{
+  "canonical_hex": "7b226163746f72223a6e756c6c2c226170695f6b65795f6964223a6e756c6c2c22636f6d706c6574696f6e5f746f6b656e73223a3334302c22636f73745f757364223a22302e3030313230303030222c22637265617465645f6174223a22323032362d30382d30315430393a30303a30302b30303a3030222c22656e64706f696e74223a6e756c6c2c226576656e745f74797065223a2261695f72657175657374222c226578747261223a7b7d2c22676174657761795f76657273696f6e223a6e756c6c2c22696e7075745f68617368223a6e756c6c2c2269735f63616368655f686974223a66616c73652c226c6174656e63795f6d73223a38372c226d6f64656c223a6e756c6c2c226f7267616e697a6174696f6e5f6964223a2233663262316334642d356536662d346137622d386339642d306531663261336234633564222c226f75747075745f68617368223a6e756c6c2c227069695f6465746563746564223a66616c73652c227069695f656e746974696573223a7b7d2c22706f6c6963795f7665726469637473223a5b5d2c2270726f6d70745f746f6b656e73223a3132302c2270726f7669646572223a6e756c6c2c22726571756573745f6964223a6e756c6c2c22736571223a377d",
+  "canonical_utf8": "{\"actor\":null,\"api_key_id\":null,\"completion_tokens\":340,\"cost_usd\":\"0.00120000\",\"created_at\":\"2026-08-01T09:00:00+00:00\",\"endpoint\":null,\"event_type\":\"ai_request\",\"extra\":{},\"gateway_version\":null,\"input_hash\":null,\"is_cache_hit\":false,\"latency_ms\":87,\"model\":null,\"organization_id\":\"3f2b1c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d\",\"output_hash\":null,\"pii_detected\":false,\"pii_entities\":{},\"policy_verdicts\":[],\"prompt_tokens\":120,\"provider\":null,\"request_id\":null,\"seq\":7}",
+  "fields": {
+    "actor": null,
+    "api_key_id": null,
+    "completion_tokens": 340,
+    "cost_usd": "0.00120000",
+    "created_at": "2026-08-01T09:00:00+00:00",
+    "endpoint": null,
+    "event_type": "ai_request",
+    "extra": {},
+    "gateway_version": null,
+    "input_hash": null,
+    "is_cache_hit": false,
+    "latency_ms": 87,
+    "model": null,
+    "organization_id": "3f2b1c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d",
+    "output_hash": null,
+    "pii_detected": false,
+    "pii_entities": {},
+    "policy_verdicts": [],
+    "prompt_tokens": 120,
+    "provider": null,
+    "request_id": null,
+    "seq": 7
+  },
+  "name": "all-nullable-fields-null",
+  "prev_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "row_hash": "077c1d22f16b2ca9c70bad0a0aed298f6e78c81758b4e12bb51412f8abb8e6a5"
+}

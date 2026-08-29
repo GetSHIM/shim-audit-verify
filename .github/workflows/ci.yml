@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: ['3.11', '3.12', '3.13', '3.14']
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+      - run: uv sync --locked --python ${{ matrix.python-version }}
+      - run: uv run --locked ruff check .
+      - run: uv run --locked ruff format --check .
+      - run: uv run --locked ty check
+      - name: Tests with branch coverage
+        run: |
+          uv run --locked coverage run -m pytest
+          uv run --locked coverage report
+      - name: Generated artefacts are not stale
+        run: |
+          uv run --locked python scripts/generate_vectors.py --check
+          uv run --locked python scripts/generate_examples.py --check
+      - run: uv build --no-build-isolation
+      - name: The distribution must declare no runtime dependencies
+        run: python scripts/check_distribution.py dist
+      - name: A clean install verifies the published examples
+        shell: bash
+        run: |
+          set -euo pipefail
+          uv venv --python ${{ matrix.python-version }} /tmp/verify-wheel
+          uv pip install --python /tmp/verify-wheel --no-deps dist/*.whl
+          uv pip list --python /tmp/verify-wheel --format json > /tmp/installed.json
+          python scripts/check_installed.py /tmp/installed.json
+          verify=/tmp/verify-wheel/bin/shim-audit-verify
+          expect() {
+            local expected=$1; shift
+            local actual=0
+            "$@" > /dev/null || actual=$?
+            if [ "$actual" -ne "$expected" ]; then
+              echo "expected exit $expected from: $*  (got $actual)" >&2
+              exit 1
+            fi
+          }
+          expect 0 "$verify" examples/shim-audit-sample.json
+          expect 0 "$verify" examples/shim-audit-sample.json --json
+          expect 1 "$verify" examples/shim-audit-sample-tampered.json
+          printf 'not a bundle' > /tmp/broken.json
+          expect 2 "$verify" /tmp/broken.json
+          expect 2 "$verify" /tmp/definitely-absent.json
+          "$verify" - --quiet < examples/shim-audit-sample.json
+      - name: The package must not reach the network, a subprocess or the environment
+        run: python scripts/check_no_side_channels.py src
